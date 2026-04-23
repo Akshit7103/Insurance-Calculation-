@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MB Calculator</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="panel">
+        <div class="heading">
+          <p class="eyebrow">Excel Calculator</p>
+          <h1>MB Output Generator</h1>
+          <p class="subtext">Upload the input workbook through column BD and download the calculated output through DO.</p>
+        </div>
+
+        <form id="uploadForm" class="uploader">
+          <label id="dropZone" class="drop-zone" for="fileInput">
+            <input id="fileInput" name="file" type="file" accept=".xlsx,.xlsm" required>
+            <span class="icon" aria-hidden="true">↑</span>
+            <span id="fileLabel" class="file-label">Choose Excel file</span>
+            <span class="hint">.xlsx or .xlsm</span>
+          </label>
+
+          <button id="submitButton" type="submit">
+            <span>Calculate</span>
+          </button>
+        </form>
+
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
