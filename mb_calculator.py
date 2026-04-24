@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import math
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -10,10 +11,12 @@ from typing import Any
 
 import openpyxl
 from openpyxl import Workbook, load_workbook
+from openpyxl.cell.cell import MergedCell
 from openpyxl.utils import get_column_letter
 from openpyxl.utils.datetime import from_excel, to_excel
 
 
+BASE_DIR = Path(__file__).resolve().parent
 SHEET_NAME = "MBP_CPP_CHP_RFP_SMB_MSB_RMM_MMP"
 INPUT_LAST_COL = 56  # BD
 CALC_FIRST_COL = 58  # BF
@@ -22,6 +25,7 @@ DATA_START_ROW = 3
 CURRENT_YEAR = 2026
 ACCRUED_INTEREST_DATE_SERIAL = 46112  # 2026-03-31 in Excel's date system
 ACCRUED_INTEREST_RATE = 0.0825
+FORMAT_TEMPLATE_PATH = BASE_DIR / "format_template.xlsx"
 
 
 ROW1_HEADERS = {
@@ -621,11 +625,19 @@ def build_output(input_path: Path, output_path: Path) -> int:
         for col, value in enumerate(row_values, start=1):
             output_ws.cell(row_num, col).value = value
 
+    apply_template_formatting(output_wb, output_ws, rows_written)
+
     for col in range(CALC_FIRST_COL, CALC_LAST_COL + 1):
         letter = get_column_letter(col)
         output_ws.column_dimensions[letter].width = 14
-        output_ws[f"{letter}1"] = ROW1_HEADERS.get(letter)
-        output_ws[f"{letter}2"] = ROW2_HEADERS.get(letter)
+        header_1 = ROW1_HEADERS.get(letter)
+        header_2 = ROW2_HEADERS.get(letter)
+        cell_1 = output_ws[f"{letter}1"]
+        cell_2 = output_ws[f"{letter}2"]
+        if header_1 is not None and not isinstance(cell_1, MergedCell):
+            cell_1.value = header_1
+        if header_2 is not None and not isinstance(cell_2, MergedCell):
+            cell_2.value = header_2
 
     for row_num, row_values in enumerate(
         output_ws.iter_rows(min_row=DATA_START_ROW, max_row=rows_written, max_col=INPUT_LAST_COL, values_only=True),
@@ -643,6 +655,62 @@ def build_output(input_path: Path, output_path: Path) -> int:
     output_ws.freeze_panes = "A3"
     output_wb.save(output_path)
     return data_rows
+
+
+def copy_cell_format(source_cell: Any, target_cell: Any) -> None:
+    if source_cell.has_style:
+        target_cell.font = copy.copy(source_cell.font)
+        target_cell.fill = copy.copy(source_cell.fill)
+        target_cell.border = copy.copy(source_cell.border)
+        target_cell.alignment = copy.copy(source_cell.alignment)
+        target_cell.protection = copy.copy(source_cell.protection)
+        target_cell.number_format = source_cell.number_format
+
+
+def apply_template_formatting(
+    output_wb: openpyxl.Workbook,
+    output_ws: openpyxl.worksheet.worksheet.Worksheet,
+    rows_written: int,
+) -> None:
+    if not FORMAT_TEMPLATE_PATH.exists():
+        return
+
+    template_wb = load_workbook(FORMAT_TEMPLATE_PATH)
+    template_ws = template_wb[SHEET_NAME]
+
+    for merged_range in template_ws.merged_cells.ranges:
+        output_ws.merge_cells(str(merged_range))
+
+    for col in range(1, CALC_LAST_COL + 1):
+        letter = get_column_letter(col)
+        output_ws.column_dimensions[letter].width = template_ws.column_dimensions[letter].width
+
+    for row_num in (1, 2, 3):
+        if template_ws.row_dimensions[row_num].height is not None:
+            output_ws.row_dimensions[row_num].height = template_ws.row_dimensions[row_num].height
+
+    template_data_row = 3
+    data_row_height = template_ws.row_dimensions[template_data_row].height
+
+    for row_num in range(1, max(rows_written, 2) + 1):
+        template_row = row_num if row_num <= 3 else template_data_row
+        if row_num >= DATA_START_ROW and data_row_height is not None:
+            output_ws.row_dimensions[row_num].height = data_row_height
+        for col in range(1, CALC_LAST_COL + 1):
+            copy_cell_format(template_ws.cell(template_row, col), output_ws.cell(row_num, col))
+
+    output_ws.freeze_panes = "A3"
+
+    if template_ws.sheet_view.showGridLines is not None:
+        output_ws.sheet_view.showGridLines = template_ws.sheet_view.showGridLines
+
+    output_ws.sheet_format.defaultColWidth = template_ws.sheet_format.defaultColWidth
+    output_ws.sheet_format.defaultRowHeight = template_ws.sheet_format.defaultRowHeight
+    output_ws.sheet_format.baseColWidth = template_ws.sheet_format.baseColWidth
+
+    output_ws.page_margins = copy.copy(template_ws.page_margins)
+    output_ws.page_setup = copy.copy(template_ws.page_setup)
+    output_ws.print_options = copy.copy(template_ws.print_options)
 
 
 def values_close(left: Any, right: Any, tolerance: float = 1e-6) -> bool:
