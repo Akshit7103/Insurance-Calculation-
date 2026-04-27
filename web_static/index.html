@@ -12,15 +12,15 @@
         <div class="heading">
           <p class="eyebrow">Excel Calculator</p>
           <h1>MB Output Generator</h1>
-          <p class="subtext">Upload the input workbook through column BD and download the calculated output through DO.</p>
+          <p class="subtext">Upload the input workbook or CSV through column BD and download the calculated output through DO.</p>
         </div>
 
         <form id="uploadForm" class="uploader">
           <label id="dropZone" class="drop-zone" for="fileInput">
-            <input id="fileInput" name="file" type="file" accept=".xlsx,.xlsm" required>
-            <span class="icon" aria-hidden="true">↑</span>
-            <span id="fileLabel" class="file-label">Choose Excel file</span>
-            <span class="hint">.xlsx or .xlsm</span>
+            <input id="fileInput" name="file" type="file" accept=".xlsx,.xlsm,.csv" required>
+            <span class="icon" aria-hidden="true">&#8593;</span>
+            <span id="fileLabel" class="file-label">Choose Excel or CSV file</span>
+            <span class="hint">.xlsx, .xlsm, or .csv</span>
           </label>
 
           <button id="submitButton" type="submit">

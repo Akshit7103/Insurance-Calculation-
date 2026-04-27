@@ -16,7 +16,7 @@ function selectedFile() {
 
 fileInput.addEventListener("change", () => {
   const file = selectedFile();
-  fileLabel.textContent = file ? file.name : "Choose Excel file";
+  fileLabel.textContent = file ? file.name : "Choose Excel or CSV file";
   setStatus("");
 });
 

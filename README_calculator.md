@@ -1,10 +1,10 @@
 # MB Calculator
 
-This tool calculates the `MBP_CPP_CHP_RFP_SMB_MSB_RMM_MMP` output columns from a client input workbook.
+This tool calculates the `MBP_CPP_CHP_RFP_SMB_MSB_RMM_MMP` output columns from a client input workbook or CSV file.
 
 ## Input
 
-- One Excel file.
+- One Excel file or CSV file.
 - One sheet, preferably named `MBP_CPP_CHP_RFP_SMB_MSB_RMM_MMP`.
 - Columns `A:BD` only, ending at `MODAL_FACTOR`.
 - Data rows start from row `3`, matching the provided workbook layout.
@@ -15,6 +15,7 @@ This tool calculates the `MBP_CPP_CHP_RFP_SMB_MSB_RMM_MMP` output columns from a
 - One sheet named `MBP_CPP_CHP_RFP_SMB_MSB_RMM_MMP`.
 - Original input columns `A:BD`.
 - Calculated columns `BF:DO`.
+- Calculated columns `BF:DF` are hidden in the generated workbook.
 - The bonus-sheet calculations used by `BZ`, `CH`, `CO`, and `CS` are built into the Python tool, so the output workbook does not need separate bonus sheets.
 
 ## Run

@@ -38,7 +38,7 @@ Health Check Path: /health
 
 Input:
 
-- One Excel workbook.
+- One Excel workbook or CSV file.
 - One sheet, preferably named `MBP_CPP_CHP_RFP_SMB_MSB_RMM_MMP`.
 - Client data columns `A:BD`.
 
@@ -47,5 +47,6 @@ Output:
 - One Excel workbook.
 - One sheet named `MBP_CPP_CHP_RFP_SMB_MSB_RMM_MMP`.
 - Input columns `A:BD` plus calculated columns `BF:DO`.
+- Calculated columns `BF:DF` are hidden in the generated workbook.
 
 The generated Excel output contains calculated values. The bonus-sheet logic used by `BZ`, `CH`, `CO`, and `CS` is implemented in `mb_calculator.py`, so the uploaded workbook does not need separate bonus sheets.

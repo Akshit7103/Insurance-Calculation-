@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import csv
 import math
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -282,7 +283,12 @@ def excel_date(value: Any) -> datetime | None:
         stripped = value.strip()
         if not stripped:
             return None
-        for fmt in ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%m/%d/%Y"):
+        try:
+            return datetime.fromisoformat(stripped)
+        except ValueError:
+            pass
+        for fmt in ("%Y-%m-%d %H:%M:%S", "%d-%m-%Y %H:%M:%S", "%d/%m/%Y %H:%M:%S",
+                    "%m/%d/%Y %H:%M:%S", "%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%m/%d/%Y"):
             try:
                 return datetime.strptime(stripped, fmt)
             except ValueError:
@@ -392,6 +398,24 @@ def rfp_rv_bonus(row: CalculationRow) -> float:
             total_bonus += bonus
             running_base += bonus
     return total_bonus
+
+
+def load_input_sheet(input_path: Path) -> tuple[openpyxl.Workbook, openpyxl.worksheet.worksheet.Worksheet]:
+    if input_path.suffix.lower() != ".csv":
+        input_wb = load_workbook(input_path, data_only=True, read_only=True)
+        input_ws = input_wb[SHEET_NAME] if SHEET_NAME in input_wb.sheetnames else input_wb[input_wb.sheetnames[0]]
+        return input_wb, input_ws
+
+    input_wb = Workbook()
+    input_ws = input_wb.active
+    input_ws.title = SHEET_NAME
+
+    with input_path.open("r", encoding="utf-8-sig", newline="") as file:
+        reader = csv.reader(file)
+        for row_values in reader:
+            input_ws.append(row_values[:INPUT_LAST_COL])
+
+    return input_wb, input_ws
 
 
 def calculate_row(input_values: dict[str, Any]) -> CalculationRow:
@@ -606,8 +630,7 @@ def calculate_row(input_values: dict[str, Any]) -> CalculationRow:
 
 
 def build_output(input_path: Path, output_path: Path) -> int:
-    input_wb = load_workbook(input_path, data_only=True, read_only=True)
-    input_ws = input_wb[SHEET_NAME] if SHEET_NAME in input_wb.sheetnames else input_wb[input_wb.sheetnames[0]]
+    input_wb, input_ws = load_input_sheet(input_path)
 
     output_wb = Workbook()
     output_ws = output_wb.active
@@ -638,6 +661,9 @@ def build_output(input_path: Path, output_path: Path) -> int:
             cell_1.value = header_1
         if header_2 is not None and not isinstance(cell_2, MergedCell):
             cell_2.value = header_2
+
+    for col in range(col_num("BF"), col_num("DF") + 1):
+        output_ws.column_dimensions[get_column_letter(col)].hidden = True
 
     for row_num, row_values in enumerate(
         output_ws.iter_rows(min_row=DATA_START_ROW, max_row=rows_written, max_col=INPUT_LAST_COL, values_only=True),

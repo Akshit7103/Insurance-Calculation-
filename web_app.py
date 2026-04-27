@@ -40,14 +40,15 @@ def health() -> dict[str, str]:
 @app.post("/calculate")
 async def calculate(file: UploadFile = File(...)) -> FileResponse:
     filename = file.filename or "input.xlsx"
-    if not filename.lower().endswith((".xlsx", ".xlsm")):
-        raise HTTPException(status_code=400, detail="Please upload an .xlsx or .xlsm file.")
+    suffix = Path(filename).suffix.lower()
+    if suffix not in {".xlsx", ".xlsm", ".csv"}:
+        raise HTTPException(status_code=400, detail="Please upload an .xlsx, .xlsm, or .csv file.")
 
     work_dir = Path(tempfile.gettempdir()) / "mb_calculator_uploads"
     work_dir.mkdir(parents=True, exist_ok=True)
 
     token = uuid.uuid4().hex
-    input_path = work_dir / f"{token}_{Path(filename).stem}.xlsx"
+    input_path = work_dir / f"{token}_{Path(filename).stem}{suffix}"
     output_path = work_dir / f"{token}_calculated_output.xlsx"
 
     content = await file.read()
